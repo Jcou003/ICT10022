@@ -1,0 +1,62 @@
+main{font-size:2em;width:70%;border:3px solid black;padding:1%;}
+form{display:table;margin:1%;padding:4px;width:70%;border:3px solid black;} 
+form p{display:table-row;} 
+.flabel{display:table-cell;width:40%;} 
+.input{display:table-cell;width:60%;}/*Form styling for alignmnet of elements*/
+#ldesc{vertical-align:middle;}
+
+table, td, th, tr {
+    border:solid 1px black;
+}
+
+table {
+    border:solid 1px black;
+}
+
+header{
+    font-size:2em;
+    border:3px solid black;
+    background-color:black;
+    color:gold;
+    margin:0;
+    padding:1%;
+    width:70%;
+}
+
+nav {
+    border:3px solid black;
+    background-color:black;
+    color:gold;
+    margin:0;
+    padding:1%;
+    text-align:right;
+    width:70%
+}
+
+h1 {
+    margin:0;
+    padding:0 1% 0 1%;
+}
+
+#tokens {
+    font-size:2em;
+    background-color:black;
+    color:gold;
+    margin:0;
+    border:2px white solid;
+    border-radius:30px;
+}
+
+footer{
+    border:3px solid black;
+    background-color:black;
+    color:gold;
+    margin:0;
+    padding:1%;
+    width:70%
+}
+
+footer p {
+    margin:0;
+    padding:0;
+}

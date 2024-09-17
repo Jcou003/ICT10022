@@ -1,30 +1,57 @@
 <?php
-    $tokens = 100;
+    require_once("settings.php"); //db login details
+    $tokens = 0;
     $cost = 0;
-    $pattern = "/^[0-9]+$/";
-    if (isset($_POST['booking'])&&(isset($_POST['elec'])||isset($_POST['pedal']))&&!empty($_POST['duration'])){
-        if (preg_match($pattern, $_POST['duration'])){
-            if ($_POST['booking']=='immediate'){
-                $cost += 2;
+    $overdraw = false;
+    $pattern = "/^[0-9]+$/"; //regex
+    if (!empty($_POST['uid'])&&!empty($_POST['pwd'])&&preg_match($pattern, $_POST['uid'])){ //user login check
+        $uid = $_POST['uid'];
+        $pwd = $_POST['pwd'];
+        $dbConnect = @new mysqli($host, $user, $pswd, $dbnm) //db connection
+            or die("<p>User database connection failed. Error No. " . $dbConnect->connect_errno . ": " . $dbConnect->connect_error . ".</p>");
+        $query = "SELECT tokens FROM bikeusers WHERE id={$uid} AND pwd='{$pwd}';"; //fetching user tokens
+        $result = $dbConnect->query($query);
+        if ($result->num_rows<1)
+            header("location:login.php"); //redirect if uid and pwd have no matches
+        $row = $result->fetch_row();
+        $tokens = $row[0];
+
+        if (isset($_POST['booking'])&&(isset($_POST['elec'])||isset($_POST['pedal']))&&!empty($_POST['duration'])){
+            if (preg_match($pattern, $_POST['duration'])){
+                if ($_POST['booking']=='immediate'){
+                    $cost += 2;
+                } else {
+                    $cost += 1;
+                }
+                if (isset($_POST['elec'])&&isset($_POST['pedal'])){
+                    $cost += 2;
+                } elseif (isset($_POST['elec'])&&!isset($_POST['pedal'])){
+                    $cost += 3;
+                } else {
+                    $cost += 1;
+                }
+                $durmult = $_POST['duration'] * 0.5;
+                $cost = round($cost*$durmult); //booking cost calculation
+
+                if ($tokens>=$cost){ //if user has enough tokens proceed
+                    $tokens -= $cost;
+                    $query = "UPDATE {$tbnm} SET tokens={$tokens} WHERE id={$uid};";
+                    $dbConnect->query($query); //updating user tokens
+                    $book = true;
+                } else {
+                    $book=false; 
+                    $overdraw=true; //if cost is greater than tokens mark an overdraw
+                }   
             } else {
-                $cost += 1;
+                $book = false;
             }
-            if (isset($_POST['elec'])&&isset($_POST['pedal'])){
-                $cost += 2;
-            } elseif (isset($_POST['elec'])&&!isset($_POST['pedal'])){
-                $cost += 3;
-            } else {
-                $cost += 1;
-            }
-            $durmult = $_POST['duration'] * 0.5;
-            $cost = round($cost*$durmult);
-            $tokens -= $cost;
-            $book = true;
         } else {
             $book = false;
         }
+
+        $dbConnect->close();
     } else {
-        $book = false;
+        header('location:login.php'); //rederict if no login info or incorrect information
     }
 ?>
 
@@ -44,7 +71,7 @@
         <h1>Reserve A Bike!</h1>
     </header>
     <nav>
-        <button id="tokens"><?php echo $tokens . " Tokens"; //arbitrary value for demo?></button>
+        <button id="tokens"><?php echo $tokens . " Tokens";?></button>
     </nav>
     <main>
         <h3>Reserve a Bike with your tokens</h3>
@@ -70,12 +97,17 @@
             <p>
                 <label class="flabel" for="duration">Duration (days): </label>
                 <input class="input" type="text" name="duration" id="duration"required>
-            </p>      
+            </p>
+            <input type="hidden" name="uid" value='<?php echo $uid;?>'>
+            <input type="hidden" name="pwd" value='<?php echo $pwd;//storing login info in hidden form field?>'>
             <input type="submit" value="Book Now">
         </form>
         <?php
             if ($book){
                 echo "<p style='color:green'>Succesfully Booked, {$cost} tokens withdrawn.</p><p>Details sent to e-mail address listed on account.</p>";
+            }
+            if ($overdraw){
+                echo "<p style='color:red'>Booking failed. Cost of {$cost} is greater than number of tokens on account.</p>";
             }
         ?>
     </main>
